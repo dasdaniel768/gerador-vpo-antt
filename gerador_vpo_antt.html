@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Códigos VPO e ANTT</title>
+    <!-- Inclui Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configura a fonte Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl transform transition-all duration-300 hover:scale-[1.01]">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Gerador de Códigos VPO e ANTT</h1>
+        <p class="text-gray-600 mb-8 text-center">Insira os detalhes da praça de pedágio ou carregue um arquivo CSV para gerar os códigos.</p>
+
+        <!-- Seção de Entrada Manual -->
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Entrada Manual</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- UF da Praça -->
+                <div>
+                    <label for="ufPraca" class="block text-sm font-medium text-gray-700 mb-1">UF da Praça:</label>
+                    <select id="ufPraca" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Selecione a UF</option>
+                        <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                    </select>
+                </div>
+
+                <!-- Nome da Rodovia -->
+                <div>
+                    <label for="nomeRodovia" class="block text-sm font-medium text-gray-700 mb-1">Nome da Rodovia:</label>
+                    <input type="text" id="nomeRodovia" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ex: SP 330, BR 153, VPE-052">
+                </div>
+
+                <!-- KM da Praça -->
+                <div>
+                    <label for="kmPraca" class="block text-sm font-medium text-gray-700 mb-1">KM da Praça (ex: 482.138):</label>
+                    <input type="number" step="0.001" id="kmPraca" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ex: 482.138">
+                </div>
+
+                <!-- Tipo da Praça -->
+                <div>
+                    <label for="tipoPraca" class="block text-sm font-medium text-gray-700 mb-1">Tipo da Praça:</label>
+                    <select id="tipoPraca" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Selecione o Tipo</option>
+                        <option value="Praça de Pedágio">Praça de Pedágio</option>
+                        <option value="Cabine de Bloqueio">Cabine de Bloqueio</option>
+                    </select>
+                </div>
+
+                <!-- Sentido da Praça -->
+                <div>
+                    <label for="sentidoPraca" class="block text-sm font-medium text-gray-700 mb-1">Sentido da Praça:</label>
+                    <select id="sentidoPraca" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Selecione o Sentido</option>
+                        <option value="Crescente">Crescente (VPO)</option>
+                        <option value="Decrescente">Decrescente (VPO)</option>
+                        <option value="Bidirecional">Bidirecional (VPO/ANTT)</option>
+                        <option value="Sul/Oeste">Sul/Oeste (ANTT)</option>
+                        <option value="Norte/Leste">Norte/Leste (ANTT)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="gerarCodigosBtn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition-colors duration-200">
+                Gerar Códigos Manualmente
+            </button>
+        </div>
+
+        <!-- Seção de Carga Massiva CSV -->
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Carga Massiva (CSV)</h2>
+            <p class="text-gray-600 mb-4 text-sm">
+                Carregue um arquivo CSV. A primeira linha deve ser o cabeçalho com as colunas: <br>
+                <code class="font-mono text-xs bg-gray-100 p-1 rounded">UF_DA_PRACA,NOME_DA_RODOVIA,KM_DA_PRACA,TIPO_DA_PRACA,SENTIDO_DA_PRACA</code>
+            </p>
+            <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+            <button id="processCsvBtn" class="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition-colors duration-200">
+                Processar CSV
+            </button>
+        </div>
+
+        <div id="resultBox" class="mt-8 p-6 bg-gray-100 rounded-lg border border-gray-200 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Resultados Gerados:</h2>
+            <!-- Resultados de entrada manual -->
+            <div id="manualResult" class="mb-4 hidden">
+                <label for="idPracaVPO" class="block text-sm font-medium text-gray-700 mb-1">ID Praça (VPO):</label>
+                <input type="text" id="idPracaVPO" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-white shadow-sm font-mono text-blue-700" readonly>
+                <label for="codigoANTT" class="block text-sm font-medium text-gray-700 mb-1 mt-4">Código ANTT:</label>
+                <input type="text" id="codigoANTT" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-white shadow-sm font-mono text-green-700" readonly>
+            </div>
+
+            <!-- Resultados de carga massiva -->
+            <div id="csvResult" class="overflow-x-auto hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Linha</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UF</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rodovia</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">KM</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentido</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID VPO</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cód. ANTT</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="csvResultsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Resultados do CSV serão injetados aqui -->
+                    </tbody>
+                </table>
+                <button id="downloadCsvBtn" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-colors duration-200 float-right">
+                    Download CSV
+                </button>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md hidden">
+            <!-- Mensagens de erro serão exibidas aqui -->
+        </div>
+    </div>
+
+    <script>
+        // Mapeamento de UF para código IBGE
+        const CODIGOS_IBGE_UF = {
+            "AC": "12", "AL": "27", "AP": "16", "AM": "13", "BA": "29", "CE": "23",
+            "DF": "53", "ES": "32", "GO": "52", "MA": "21", "MT": "51", "MS": "50",
+            "MG": "31", "PA": "15", "PB": "25", "PR": "41", "PE": "26", "PI": "22",
+            "RJ": "33", "RN": "24", "RS": "43", "RO": "11", "RR": "14", "SC": "42",
+            "SP": "35", "SE": "28", "TO": "17"
+        };
+
+        // Tabela de exceção de nome de rodovia
+        // Formato: "Nome da Rodovia": "Código Sequencial"
+        const TABELA_EXCECAO_RODOVIA = {
+            "VPE-052": "001",
+            "CMG-100": "002",
+            // Adicione outras exceções aqui conforme suas regras internas
+        };
+
+        /**
+         * Retorna o código IBGE da UF.
+         * @param {string} ufPraca - A UF da praça.
+         * @returns {string} O código IBGE da UF.
+         */
+        function obterCodigoIbgeUf(ufPraca) {
+            return CODIGOS_IBGE_UF[ufPraca.toUpperCase()] || "";
+        }
+
+        /**
+         * Trata o nome da rodovia para o idPraca VPO.
+         * Retorna o código da rodovia formatado para VPO (UFNNN ou 99 + sequencial).
+         * @param {string} ufPraca - A UF da praça.
+         * @param {string} nomeRodovia - O nome da rodovia.
+         * @returns {string} O código da rodovia formatado para VPO.
+         */
+        function tratarNomeRodoviaVPO(ufPraca, nomeRodovia) {
+            const nomeRodoviaUpper = nomeRodovia.toUpperCase();
+
+            // Verifica se a rodovia segue o padrão UFNNN (ex: SP330)
+            const ufPrefix = ufPraca.toUpperCase();
+            if (nomeRodoviaUpper.startsWith(ufPrefix) && nomeRodoviaUpper.length === 5 && !isNaN(nomeRodoviaUpper.substring(2))) {
+                return nomeRodoviaUpper.substring(2);
+            } else {
+                // Verifica na tabela de exceção
+                const codigoSequencial = TABELA_EXCECAO_RODOVIA[nomeRodoviaUpper];
+                if (codigoSequencial) {
+                    return "99" + codigoSequencial;
+                } else {
+                    // Caso não esteja na tabela de exceção, você pode definir um tratamento padrão
+                    // ou lançar um erro. Para este gerador, vamos retornar um placeholder.
+                    console.warn(`Atenção: Rodovia '${nomeRodovia}' não encontrada nas exceções VPO. Usando 99999.`);
+                    return "99999"; // Placeholder
+                }
+            }
+        }
+
+        /**
+         * Trata o nome da rodovia para o código ANTT.
+         * Retorna uma tupla [codigoSiglaRodovia, codigoNumericoRodovia].
+         * @param {string} ufPraca - A UF da praça.
+         * @param {string} nomeRodovia - O nome da rodovia.
+         * @returns {string[]} Uma array com o código da sigla e o código numérico da rodovia para ANTT.
+         */
+        function tratarNomeRodoviaANTT(ufPraca, nomeRodovia) {
+            const nomeRodoviaUpper = nomeRodovia.toUpperCase();
+            let siglaCod;
+            let numRodovia;
+
+            // Se a sigla for BR
+            if (nomeRodoviaUpper.startsWith("BR")) {
+                siglaCod = "99";
+                numRodovia = nomeRodoviaUpper.replace(/\D/g, ''); // Extrai apenas dígitos
+                numRodovia = numRodovia.padStart(3, '0');
+                return [siglaCod, numRodovia];
+            }
+            // Se for uma rodovia estadual no padrão UFNNN (ex: SP330)
+            else if (nomeRodoviaUpper.length >= 5 && nomeRodoviaUpper.substring(0, 2).toUpperCase() === ufPraca.toUpperCase() && !isNaN(nomeRodoviaUpper.substring(2))) {
+                siglaCod = obterCodigoIbgeUf(ufPraca);
+                numRodovia = nomeRodoviaUpper.substring(2);
+                numRodovia = numRodovia.padStart(3, '0');
+                return [siglaCod, numRodovia];
+            }
+            // Para outras exceções (VPE, CMG, etc.)
+            else {
+                // Conforme a regra, se não é BR ou UFNNN, usa 99 para a sigla e tenta extrair o número.
+                console.warn(`Atenção: Tratamento ANTT para '${nomeRodovia}' não padronizado. Usando 99 para sigla e extraindo número.`);
+                siglaCod = "99";
+                numRodovia = nomeRodoviaUpper.replace(/\D/g, ''); // Tenta extrair o número
+                numRodovia = numRodovia.padStart(3, '0');
+                return [siglaCod, numRodovia];
+            }
+        }
+
+        /**
+         * Formata o KM em parte inteira (3 dígitos) e parte em metros (3 dígitos).
+         * @param {number} km - O valor do KM.
+         * @returns {string[]} Uma array com a parte inteira e a parte em metros formatadas.
+         */
+        function formatarKm(km) {
+            const parteInteira = Math.floor(km);
+            const parteMetros = Math.round((km - parteInteira) * 1000); // Multiplica por 1000 para metros
+
+            return [String(parteInteira).padStart(3, '0'), String(parteMetros).padStart(3, '0')];
+        }
+
+        /**
+         * Mapeia o tipo da praça para o código VPO.
+         * @param {string} tipoPraca - O tipo da praça (ex: "Praça de Pedágio").
+         * @returns {string} O código VPO correspondente.
+         */
+        function mapearTipoPracaVPO(tipoPraca) {
+            switch (tipoPraca.toUpperCase()) {
+                case "PRACA DE PEDAGIO": return "01";
+                case "CABINE DE BLOQUEIO": return "02";
+                default:
+                    console.warn(`Atenção: Tipo de praça '${tipoPraca}' inválido para VPO. Usando 01 como padrão.`);
+                    return "01";
+            }
+        }
+
+        /**
+         * Mapeia o sentido para o código VPO.
+         * @param {string} sentido - O sentido da praça (ex: "Crescente").
+         * @returns {string} O código VPO correspondente.
+         */
+        function mapearSentidoVPO(sentido) {
+            switch (sentido.toUpperCase()) {
+                case "CRESCENTE": return "01";
+                case "DECRESCENTE": return "02";
+                case "BIDIRECIONAL": return "03";
+                default:
+                    console.warn(`Atenção: Sentido '${sentido}' inválido para VPO. Usando 01 (Crescente) como padrão.`);
+                    return "01";
+            }
+        }
+
+        /**
+         * Mapeia o sentido para o código ANTT.
+         * @param {string} sentido - O sentido da praça (ex: "Sul/Oeste").
+         * @returns {string} O código ANTT correspondente.
+         */
+        function mapearSentidoANTT(sentido) {
+            switch (sentido.toUpperCase()) {
+                case "SUL/OESTE": return "01";
+                case "NORTE/LESTE": return "02";
+                case "BIDIRECIONAL": return "03";
+                // As regras para ANTT mencionam "se não houver, usar valor 01 como padrão."
+                case "CRESCENTE": return "01"; // Mapeia para 01 (Sul/Oeste) se inserido Crescente do VPO
+                case "DECRESCENTE": return "02"; // Mapeia para 02 (Norte/Leste) se inserido Decrescente do VPO
+                default: return "01";
+            }
+        }
+
+        /**
+         * Gera o idPraca (VPO) e o Código ANTT para uma praça de pedágio.
+         * @param {string} ufPraca - UF da praça (ex: "SP").
+         * @param {string} nomeRodovia - Nome da rodovia (ex: "SP 330", "BR 153", "VPE-052").
+         * @param {number} kmPraca - Quilômetro da praça (ex: 482.138).
+         * @param {string} tipoPraca - Tipo da praça ("Praça de Pedágio", "Cabine de Bloqueio").
+         * @param {string} sentidoPraca - Sentido da praça ("Crescente", "Decrescente", "Bidirecional" para VPO; "Sul/Oeste", "Norte/Leste", "Bidirecional" para ANTT).
+         * @returns {object} Um objeto contendo 'idPracaVPO' e 'codigoANTT'.
+         */
+        function gerarCodigosPraca(ufPraca, nomeRodovia, kmPraca, tipoPraca, sentidoPraca) {
+            let idPracaVPO = "";
+
+            // --- Geração do idPraca (VPO) ---
+            // UF da Praça
+            const codigoUfVPO = obterCodigoIbgeUf(ufPraca);
+            if (!codigoUfVPO) {
+                throw new Error("UF da Praça inválida ou não mapeada.");
+            }
+            idPracaVPO += codigoUfVPO;
+
+            // Nome da Rodovia
+            idPracaVPO += tratarNomeRodoviaVPO(ufPraca, nomeRodovia);
+
+            // KM da Praça (VPO usa 6 dígitos: KM inteiro + metros)
+            const kmIntVPO = String(Math.floor(kmPraca)).padStart(3, '0');
+            const kmMetrosVPO = String(Math.round((kmPraca - Math.floor(kmPraca)) * 1000)).padStart(3, '0');
+            idPracaVPO += kmIntVPO + kmMetrosVPO;
+
+            // Tipo da Praça
+            idPracaVPO += mapearTipoPracaVPO(tipoPraca);
+
+            // Sentido da Praça
+            idPracaVPO += mapearSentidoVPO(sentidoPraca);
+
+            // --- Geração do Código ANTT ---
+            let codigoANTT = "";
+
+            // Dígitos 1 e 2: Código IBGE da UF
+            const codigoUfANTT = obterCodigoIbgeUf(ufPraca);
+            if (!codigoUfANTT) {
+                 throw new Error("UF da Praça inválida ou não mapeada para ANTT.");
+            }
+            codigoANTT += codigoUfANTT;
+
+            // Dígitos 3 e 4: Código IBGE da sigla da rodovia (ou 99 se BR)
+            // Dígitos 5, 6 e 7: Código numérico da rodovia
+            const [siglaCodANTT, numRodoviaANTT] = tratarNomeRodoviaANTT(ufPraca, nomeRodovia);
+            codigoANTT += siglaCodANTT;
+            codigoANTT += numRodoviaANTT;
+
+            // Dígitos 8 a 13: Km da praça expressa em metros
+            const [kmInteiroANTT, kmMetrosANTT] = formatarKm(kmPraca);
+            codigoANTT += kmInteiroANTT;
+            codigoANTT += kmMetrosANTT;
+
+            // Dígitos 14 e 15: Tipo da praça (sempre 01)
+            codigoANTT += "01";
+
+            // Dígitos 16, 17 e 18: Sentido da praça
+            codigoANTT += mapearSentidoANTT(sentidoPraca);
+
+            return {
+                idPracaVPO: idPracaVPO,
+                codigoANTT: codigoANTT
+            };
+        }
+
+        // --- Elementos HTML ---
+        const ufPracaInput = document.getElementById('ufPraca');
+        const nomeRodoviaInput = document.getElementById('nomeRodovia');
+        const kmPracaInput = document.getElementById('kmPraca');
+        const tipoPracaInput = document.getElementById('tipoPraca');
+        const sentidoPracaInput = document.getElementById('sentidoPraca');
+        const gerarCodigosBtn = document.getElementById('gerarCodigosBtn');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const processCsvBtn = document.getElementById('processCsvBtn');
+        const resultBox = document.getElementById('resultBox');
+        const manualResultDiv = document.getElementById('manualResult');
+        const csvResultDiv = document.getElementById('csvResult');
+        const idPracaVPOOutput = document.getElementById('idPracaVPO');
+        const codigoANTTOutput = document.getElementById('codigoANTT');
+        const csvResultsTableBody = document.getElementById('csvResultsTableBody');
+        const errorMessage = document.getElementById('errorMessage');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+
+        let allGeneratedResults = []; // Armazena todos os resultados para download
+
+        // --- Função para exibir erro ---
+        function showErrorMessage(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            resultBox.classList.add('hidden'); // Esconde a caixa de resultados
+        }
+
+        // --- Event Listener para o botão de geração manual ---
+        gerarCodigosBtn.addEventListener('click', () => {
+            const ufPraca = ufPracaInput.value;
+            const nomeRodovia = nomeRodoviaInput.value;
+            const kmPraca = parseFloat(kmPracaInput.value);
+            const tipoPraca = tipoPracaInput.value;
+            const sentidoPraca = sentidoPracaInput.value;
+
+            errorMessage.classList.add('hidden'); // Esconde mensagens de erro anteriores
+            manualResultDiv.classList.add('hidden'); // Esconde o resultado manual
+            csvResultDiv.classList.add('hidden'); // Esconde o resultado CSV
+
+            // Validação simples dos campos de entrada
+            if (!ufPraca || !nomeRodovia || isNaN(kmPraca) || !tipoPraca || !sentidoPraca) {
+                showErrorMessage("Por favor, preencha todos os campos da entrada manual corretamente.");
+                return;
+            }
+
+            try {
+                const codigos = gerarCodigosPraca(ufPraca, nomeRodovia, kmPraca, tipoPraca, sentidoPraca);
+                idPracaVPOOutput.value = codigos.idPracaVPO;
+                codigoANTTOutput.value = codigos.codigoANTT;
+                manualResultDiv.classList.remove('hidden'); // Mostra o resultado manual
+                resultBox.classList.remove('hidden'); // Mostra a caixa de resultados principal
+            } catch (error) {
+                showErrorMessage(`Erro ao gerar códigos manualmente: ${error.message}. Por favor, verifique os dados e a tabela de exceções.`);
+                console.error("Erro na geração manual:", error);
+            }
+        });
+
+        // --- Event Listener para processar arquivo CSV ---
+        processCsvBtn.addEventListener('click', () => {
+            const file = csvFileInput.files[0];
+            if (!file) {
+                showErrorMessage("Por favor, selecione um arquivo CSV para processar.");
+                return;
+            }
+
+            errorMessage.classList.add('hidden'); // Esconde mensagens de erro anteriores
+            manualResultDiv.classList.add('hidden'); // Esconde o resultado manual
+            csvResultDiv.classList.add('hidden'); // Esconde o resultado CSV
+            csvResultsTableBody.innerHTML = ''; // Limpa a tabela de resultados anteriores
+            allGeneratedResults = []; // Limpa os resultados para download
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const lines = text.split('\n').filter(line => line.trim() !== ''); // Remove linhas vazias
+                
+                if (lines.length === 0) {
+                    showErrorMessage("O arquivo CSV está vazio.");
+                    return;
+                }
+
+                // Espera-se o cabeçalho: UF_DA_PRACA,NOME_DA_RODOVIA,KM_DA_PRACA,TIPO_DA_PRACA,SENTIDO_DA_PRACA
+                const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+                const expectedHeaders = ["UF_DA_PRACA", "NOME_DA_RODOVIA", "KM_DA_PRACA", "TIPO_DA_PRACA", "SENTIDO_DA_PRACA"];
+
+                const headerCheck = expectedHeaders.every(h => headers.includes(h));
+                if (!headerCheck) {
+                    showErrorMessage("O cabeçalho do CSV não corresponde ao formato esperado. Esperado: " + expectedHeaders.join(", "));
+                    return;
+                }
+
+                const ufIndex = headers.indexOf("UF_DA_PRACA");
+                const nomeRodoviaIndex = headers.indexOf("NOME_DA_RODOVIA");
+                const kmPracaIndex = headers.indexOf("KM_DA_PRACA");
+                const tipoPracaIndex = headers.indexOf("TIPO_DA_PRACA");
+                const sentidoPracaIndex = headers.indexOf("SENTIDO_DA_PRACA");
+
+
+                let processedCount = 0;
+                let errorInCsv = false;
+
+                for (let i = 1; i < lines.length; i++) { // Começa da segunda linha para pular o cabeçalho
+                    const cols = lines[i].split(',').map(c => c.trim());
+
+                    if (cols.length < expectedHeaders.length) {
+                        const row = csvResultsTableBody.insertRow();
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${i + 1}</td>
+                            <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Número de colunas insuficiente.</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">ERRO</td>
+                        `;
+                        errorInCsv = true;
+                        continue;
+                    }
+
+                    const ufPraca = cols[ufIndex];
+                    const nomeRodovia = cols[nomeRodoviaIndex];
+                    const kmPraca = parseFloat(cols[kmPracaIndex]);
+                    const tipoPraca = cols[tipoPracaIndex];
+                    const sentidoPraca = cols[sentidoPracaIndex];
+
+                    let idPracaVPO = '';
+                    let codigoANTT = '';
+                    let status = 'SUCESSO';
+                    let statusClass = 'text-green-600';
+
+                    try {
+                        // Validação de dados da linha CSV
+                        if (!ufPraca || !nomeRodovia || isNaN(kmPraca) || !tipoPraca || !sentidoPraca) {
+                            throw new Error("Dados incompletos ou inválidos na linha.");
+                        }
+
+                        const codigos = gerarCodigosPraca(ufPraca, nomeRodovia, kmPraca, tipoPraca, sentidoPraca);
+                        idPracaVPO = codigos.idPracaVPO;
+                        codigoANTT = codigos.codigoANTT;
+                    } catch (error) {
+                        idPracaVPO = 'ERRO';
+                        codigoANTT = 'ERRO';
+                        status = `ERRO: ${error.message}`;
+                        statusClass = 'text-red-500';
+                        errorInCsv = true;
+                    }
+
+                    allGeneratedResults.push({
+                        "Linha": i + 1,
+                        "UF_DA_PRACA": ufPraca,
+                        "NOME_DA_RODOVIA": nomeRodovia,
+                        "KM_DA_PRACA": kmPraca,
+                        "TIPO_DA_PRACA": tipoPraca,
+                        "SENTIDO_DA_PRACA": sentidoPraca,
+                        "ID_VPO": idPracaVPO,
+                        "CODIGO_ANTT": codigoANTT,
+                        "STATUS": status
+                    });
+
+                    const row = csvResultsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${i + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ufPraca}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${nomeRodovia}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${kmPraca}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${tipoPraca}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${sentidoPraca}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono ${idPracaVPO === 'ERRO' ? 'text-red-500' : 'text-blue-700'}">${idPracaVPO}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono ${codigoANTT === 'ERRO' ? 'text-red-500' : 'text-green-700'}">${codigoANTT}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass}">${status}</td>
+                    `;
+                    processedCount++;
+                }
+
+                if (processedCount > 0) {
+                    csvResultDiv.classList.remove('hidden');
+                    resultBox.classList.remove('hidden');
+                    if (errorInCsv) {
+                        showErrorMessage("Processamento CSV concluído com alguns erros. Verifique a tabela de resultados.");
+                    } else {
+                        errorMessage.classList.add('hidden'); // Esconde o erro se tudo deu certo
+                    }
+                } else {
+                    showErrorMessage("Nenhuma linha válida foi processada no CSV.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Event Listener para download do CSV de resultados ---
+        downloadCsvBtn.addEventListener('click', () => {
+            if (allGeneratedResults.length === 0) {
+                showErrorMessage("Não há dados para exportar. Por favor, processe um CSV primeiro.");
+                return;
+            }
+
+            const header = Object.keys(allGeneratedResults[0]).join(',');
+            const csvRows = allGeneratedResults.map(row => 
+                Object.values(row).map(value => 
+                    `"${String(value).replace(/"/g, '""')}"` // Adiciona aspas e escapa aspas internas
+                ).join(',')
+            );
+            const csvContent = [header, ...csvRows].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { // Feature detection
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'codigos_vpo_antt_gerados.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showErrorMessage("Seu navegador não suporta download direto de CSV. Por favor, copie o conteúdo manualmente.");
+            }
+        });
+    </script>
+</body>
+</html>
